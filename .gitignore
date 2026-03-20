@@ -2,7 +2,7 @@
 # Node artifact files
 node_modules/
 dist/
-
+.newbagbotvirtualenv*
 # Compiled Java class files
 *.class
 
