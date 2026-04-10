@@ -1,10 +1,16 @@
 # Bagbot
-A bot for accumulating alpha in the Bittensor Alpha Group.
+A bot for accumulating alpha in the Bittensor Subnets.
 
 > **⚠️ Warning: Use at your own risk!** There are no guarantees! Try with small amounts first!!
 
 > [!CAUTION]
 **HIGHLY RECOMMENDED TO JOIN THE [BITTENSOR ALPHA GROUP](https://taotemplar.com/bag) FOR HELP WITH USE AND STRATEGY**
+
+Adding some improvements on enduserrr/bagbot repo :
+- better display for subnets names
+- send prices / trades / wallet value to influx database (influx v1.8)
+- monitor master wallet and others (read-only)
+- Grafana dashboard
 
 ## Setup Instructions
 
@@ -52,6 +58,8 @@ brew install python@3.10 \
    In `bagbot_settings_overrides.py`:
    - Update the `WALLET_PW` variable with your wallet's password.
    - Modify other settings as desired. The file includes notes explaining each variable.
+   - Add IP of your influx server, database name, user and password
+   - Specify the Master wallet to monitor
 
 ## Running the Bot
 

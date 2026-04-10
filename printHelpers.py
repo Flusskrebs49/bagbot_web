@@ -73,7 +73,8 @@ def print_table_rich(
     allowed_subnets: List[int],
     stats: Dict[int, Dict],
     balance: float,
-    subnet_grids: Dict[int, Dict]
+    subnet_grids: Dict[int, Dict],
+    trade_counts: Dict = None
 ):
     """
     Print a Rich table
@@ -87,7 +88,7 @@ def print_table_rich(
 
     table = Table(title=f"Staking Allocations - {formatted_time}", header_style="bold white on dark_blue", box=box.SIMPLE_HEAVY)
     table.add_column("Subnet", justify="right", style="bright_cyan")
-    table.add_column("Name", justify="left", style="white")
+    table.add_column("Name", justify="left", style="white", no_wrap=True, max_width=12)
     table.add_column("Alpha", justify="right", style="magenta")
     table.add_column("Max Alpha", justify="right", style="magenta")
     table.add_column("% Filled", justify="right", style="magenta")
@@ -99,7 +100,7 @@ def print_table_rich(
     table.add_column("Sell Lower", justify="right", style="grey66")
     table.add_column("Curr Sell", justify="right", style="bright_red")
     table.add_column("Sell Upper", justify="right", style="grey66")
-    table.add_column("Price Proximity", justify="right", style="white")
+    table.add_column("Trades", justify="center", style="white")
 
     # Collect all unique subnet IDs across all validators
     all_netuids = set()
@@ -169,6 +170,9 @@ def print_table_rich(
         stake_amount_str = f"{stake_amt:.0f}"
         max_stake_str = f"{max_stake_amt:.0f}" if max_stake_amt > 0 else ''
         stake_perc_filled = str(int(stake_amt*100.0/max_stake_amt)) + '%' if max_stake_amt > 0 else ''
+        counts = trade_counts.get(netuid, {'buy': 0, 'sell': 0}) if trade_counts else {'buy': 0, 'sell': 0}
+        trades_str = f"B:{counts['buy']} S:{counts['sell']}"
+
         table.add_row(
             f"{'BUY ' if probably_buying else ''}{'SELL ' if probably_selling else ''}{str(netuid)}",
             name,
@@ -183,7 +187,7 @@ def print_table_rich(
             f"{low_sell}",
             f"{sell_threshold}",
             f"{high_sell}",
-            f"{prox_bar}"
+            trades_str
         )
 
     summary = (
