@@ -33,12 +33,17 @@ brew install python@3.10 \
 && source .bagbotvirtualenv/bin/activate
 ```
 
-#### 4. Install Requirements 
+#### 4. Install Requirements & Flask
    ```bash
    python3 -m pip install -r requirements.txt
+   pip install Flask
    ```
 
-#### 5. Create a New Wallet
+#### 5. Move *.html files 
+   create \bagbot\templates
+   move index.html and login.html to \templates
+
+#### 6. Create a New Wallet
    ```bash
    btcli w create --wallet.name bagbot
    ```
@@ -66,5 +71,6 @@ To start the bot, activate the virtual environment and run the script:
 ```bash
 source ~/.bagbotvirtualenv/bin/activate
 python3 bagbot.py
+python3 bagbot_web.py
 ```
-
+You can access to the login page at : http://ip_bagbot:5000
