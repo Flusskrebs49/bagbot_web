@@ -135,7 +135,6 @@ class BittensorUtility():
         self.trade_counts = {}  # { netuid: {'buy': int, 'sell': int} }
         self.TRADE_COUNTS_FILE = 'trade_counts.json'
         self._load_trade_counts()
-        self.watched_wallets_balance = {}  # { label: {'balance_tao', 'stake_value_tao', 'total_tao'} }
 
 
     def _load_trade_counts(self):
@@ -282,9 +281,24 @@ class BittensorUtility():
  
  
     async def refresh_subnet_grid(self):
-        if not self.gridLoaded:
-            self.subnet_grids = bagbot_settings.SUBNET_SETTINGS
-            self.validateGrid()
+        global bagbot_settings
+        # Rechargement à chaud : relit les fichiers de config à chaque tick
+        try:
+            bagbot_settings = load_safe_python_settings()
+        except Exception as e:
+            logger.warning(f'Rechargement config échoué, on garde la config actuelle: {e}')
+
+        new_grids = bagbot_settings.SUBNET_SETTINGS
+        if new_grids != getattr(self, 'subnet_grids', None):
+            try:
+                self.subnet_grids = new_grids
+                self.validateGrid()
+                if self.gridLoaded:
+                    logger.info('Config rechargée à chaud — grilles mises à jour')
+                    self.sendNotification('🔄 Config rechargée à chaud — grilles mises à jour')
+            except InvalidSettings as e:
+                logger.error(f'Config invalide, rechargement annulé: {e}')
+                self.sendNotification(f'⚠️ Config invalide, rechargement annulé: {e}')
         self.gridLoaded = True
  
     def validateGrid(self):
@@ -517,57 +531,6 @@ class BittensorUtility():
  
  
  
-    async def refresh_watched_wallets(self):
-        """
-        Lit le solde TAO libre + la valeur des stakes pour chaque wallet
-        déclaré dans WATCHED_WALLETS. Lecture seule.
-        """
-        watched = getattr(bagbot_settings, 'WATCHED_WALLETS', {})
-        if not watched:
-            return
-
-        for label, address in watched.items():
-            try:
-                balance_tao = float(await asyncio.wait_for(
-                    self.sub.get_balance(address=address),
-                    timeout=10.0
-                ))
-
-                stake_value_tao = 0.0
-                try:
-                    stake_info_list = await asyncio.wait_for(
-                        self.sub.get_stake_info_for_coldkey(coldkey_ss58=address),
-                        timeout=20.0
-                    )
-                    if stake_info_list and isinstance(stake_info_list, list):
-                        for stake_info in stake_info_list:
-                            netuid = getattr(stake_info, 'netuid', None)
-                            stake  = getattr(stake_info, 'stake',  None)
-                            if netuid is None or stake is None:
-                                continue
-                            # stake est un objet Balance — utiliser .tao
-                            alpha = stake.tao if hasattr(stake, 'tao') else float(stake)
-                            if alpha <= 0:
-                                continue
-                            # Utiliser self.stats qui contient tous les subnets
-                            if netuid not in self.stats:
-                                continue
-                            price = float(self.stats[netuid]['price'])
-                            stake_value_tao += alpha * price
-                except Exception as e:
-                    logger.warning(f'[{label}] Impossible de lire les stakes: {e}')
-                    logger.warning(traceback.format_exc())
-
-                self.watched_wallets_balance[label] = {
-                    'balance_tao'    : balance_tao,
-                    'stake_value_tao': stake_value_tao,
-                    'total_tao'      : balance_tao + stake_value_tao,
-                }
-                logger.info(f'Watched [{label}]: libre={balance_tao:.4f}, stake={stake_value_tao:.4f} TAO')
-
-            except Exception as e:
-                logger.warning(f'Impossible de lire le wallet [{label}]: {e}')
-
     async def run(self):
         await self.setup()
         await self.refresh_subnet_grid()  # Load subnet settings before first tick
@@ -593,8 +556,7 @@ class BittensorUtility():
  
                 logger.info(f'Tick {self.tick}: Printing table')
                 printHelpers.print_table_rich(self, console, self.current_stake_info, list(bagbot_settings.SUBNET_SETTINGS.keys()), self.stats, self.balance, self.subnet_grids, self.trade_counts)
-                await self.refresh_watched_wallets()
-                influx_reporter.send_metrics(self, self.stats, self.trade_counts, self.balance, self.watched_wallets_balance)
+                influx_reporter.send_metrics(self, self.stats, self.trade_counts, self.balance)
                 if self.tick == 1 and not self.args.nocheck:
                     loop = asyncio.get_event_loop()
                     user_input = await loop.run_in_executor(None, input, "Should the bot proceed? (Y/N): ")
