@@ -1,4 +1,4 @@
-ELEGRAM_TOKEN = "xxxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+TELEGRAM_TOKEN = "xxxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 TELEGRAM_CHAT_ID = "11111111111"
 STAKE_ON_VALIDATOR = "5CszMVts9ueMUSKdAwLFSLT7u4oyxN7fUBpo8Z3ETw1ggMUV"
 WALLET_PW = 'xxxxxxxx' #Replace with your wallet's password that you entered into btcli
