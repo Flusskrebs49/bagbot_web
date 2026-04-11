@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BagBot — Accès</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #080c10;
+            --surface: #0e1419;
+            --border: #1e2830;
+            --accent: #00d4ff;
+            --accent2: #00ff9d;
+            --text: #c8d8e8;
+            --muted: #4a6070;
+            --danger: #ff4560;
+            --mono: 'Space Mono', monospace;
+            --sans: 'Syne', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        .login-wrap {
+            position: relative;
+            width: 380px;
+        }
+
+        .login-glow {
+            position: absolute;
+            inset: -40px;
+            background: radial-gradient(ellipse at center, rgba(0,212,255,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .login-card {
+            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 48px 40px;
+            clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 20px; height: 20px;
+            border-top: 1px solid var(--accent);
+            border-right: 1px solid var(--accent);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 36px;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .brand-name {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-name span {
+            color: var(--accent);
+        }
+
+        .login-title {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .field input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 14px;
+            padding: 12px 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .field input:focus {
+            border-color: var(--accent);
+        }
+
+        .btn-login {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--accent);
+            transform: translateX(-100%);
+            transition: transform 0.2s;
+        }
+
+        .btn-login:hover::before { transform: translateX(0); }
+        .btn-login:hover { color: var(--bg); }
+        .btn-login span { position: relative; z-index: 1; }
+
+        .error {
+            background: rgba(255,69,96,0.1);
+            border: 1px solid rgba(255,69,96,0.3);
+            color: var(--danger);
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 10px 14px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrap">
+        <div class="login-glow"></div>
+        <div class="login-card">
+            <div class="brand">
+                <div class="brand-icon">⬡</div>
+                <div class="brand-name">Bag<span>Bot</span></div>
+            </div>
+            <div class="login-title">// Accès sécurisé</div>
+            {% if error %}
+            <div class="error">⚠ {{ error }}</div>
+            {% endif %}
+            <form method="POST">
+                <div class="field">
+                    <label>Mot de passe</label>
+                    <input type="password" name="password" autofocus placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-login"><span>→ Accéder</span></button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
