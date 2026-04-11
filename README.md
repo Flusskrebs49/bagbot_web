@@ -1,16 +1,15 @@
-# Bagbot
-A bot for accumulating alpha in the Bittensor Subnets.
+# Bagbot_web
+A bot for trading alpha in the Bittensor Subnets.
 
 > **⚠️ Warning: Use at your own risk!** There are no guarantees! Try with small amounts first!!
 
 > [!CAUTION]
 **HIGHLY RECOMMENDED TO JOIN THE [BITTENSOR ALPHA GROUP](https://taotemplar.com/bag) FOR HELP WITH USE AND STRATEGY**
 
-Adding some improvements on enduserrr/bagbot repo :
-- better display for subnets names
-- send prices / trades / wallet value to influx database (influx v1.8)
-- monitor master wallet and others (read-only)
-- Grafana dashboard
+Adding some improvements on Flusskrebs49/bagbot repo :
+- web interface in Flask for remove/add subnets, modifying buy/sell prices
+- web interface with logging page (only on local network), brute force, session timeout
+- writing the bagbot configuration file on the fly (no need to restart the bot)
 
 ## Setup Instructions
 
