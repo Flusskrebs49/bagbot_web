@@ -61,9 +61,13 @@ brew install python@3.10 \
 #### 8. Edit the Settings File
    In `bagbot_settings_overrides.py`:
    - Update the `WALLET_PW` variable with your wallet's password.
+   - Update your TELEGRAM toker and ChatID
+   - Update the `WALLET_WALLET` variable with the `ss58_address` to monitor
    - Modify other settings as desired. The file includes notes explaining each variable.
    - Add IP of your influx server, database name, user and password
    - Specify the Master wallet to monitor
+   In `bagbot_web.py`:
+   - Update the `WEB_PASSWORD` variable with your login password.
 
 ## Running the Bot
 
