@@ -29,22 +29,7 @@ SELL_ZONE_POWER = 1.0  # Power curve exponent for sell price progression
 # max_slippage_percent_per_buy - Override max slippage % for this subnet (default: MAX_SLIPPAGE_PERCENT_PER_BUY)
 # buy_zone_power - Override buy zone power curve for this subnet (default: BUY_ZONE_POWER)
 # sell_zone_power - Override sell zone power curve for this subnet (default: SELL_ZONE_POWER)
-SUBNET_SETTINGS = {
-    107: {
-        'buy_lower': 0.00255,
-        'buy_upper': 0.00485,
-        'sell_lower': 0.02345,
-        'sell_upper': 0.02845,
-        'max_alpha': 27,
-    },
-    100: {
-        'buy_lower': 0.00955,
-        'buy_upper': 0.01175,
-        'sell_lower': 0.02055,
-        'sell_upper': 0.02655,
-        'max_alpha': 27,
-    },
-}
+
      # Example overrides (optional):
      # 'max_tao_per_buy': 0.05,  # Use 0.05 TAO per buy instead of global default
      # 'max_tao_per_sell': 0.03,  # Use 0.03 TAO per sell instead of global default
