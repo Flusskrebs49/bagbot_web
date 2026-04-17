@@ -54,16 +54,17 @@ def load_safe_python_settings():
  
     default_path = exe_dir / "bagbot_settings.py"
     overrides_path = exe_dir / "bagbot_settings_overrides.py"
- 
-    for path in [default_path, overrides_path]:
+    subnets_path   = exe_dir / "bagbot_subnets.py"
+
+    for path in [default_path, overrides_path, subnets_path]:
         is_default = (path == default_path)
- 
+
         if not path.exists():
             if is_default:
                 raise FileNotFoundError(f"CRITICAL: {path} is missing! Cannot continue.")
             else:
-                print(f"Info: Optional overrides file not found (this is fine): {path}")
-                continue  # overrides are optional
+                print(f"Info: Optional file not found (this is fine): {path}")
+                continue  # overrides and subnets are optional
  
         source = path.read_text(encoding="utf-8")
  
@@ -591,6 +592,8 @@ class BittensorUtility():
             start = time.time()
             try:
                 logger.info(f'Starting tick {self.tick}')
+                # Rechargement à chaud de la config à chaque tick
+                await self.refresh_subnet_grid()
                 # Try to discover ALL validators with stake from blockchain
                 discovered_validators = await self.discover_all_validators_with_stake()
  
