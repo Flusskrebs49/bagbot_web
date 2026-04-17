@@ -18,13 +18,14 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
 # ── Configuration ─────────────────────────────
-WEB_PASSWORD          = "changeme"   # ← modifier ce mot de passe
+WEB_PASSWORD          = "password"   # ← modifier ce mot de passe
 SESSION_LIFETIME_H    = 4            # expiration de session en heures
 MAX_FAILED_ATTEMPTS   = 5            # tentatives max avant blocage
 BRUTE_FORCE_WINDOW_S  = 300          # fenêtre de blocage en secondes (5 min)
 
 SETTINGS_FILE    = Path("bagbot_settings.py")
 OVERRIDES_FILE   = Path("bagbot_settings_overrides.py")
+SUBNETS_FILE     = Path("bagbot_subnets.py")   # géré exclusivement par cette interface
 
 # ── Protection brute force ────────────────────
 _failed_attempts = defaultdict(list)  # { ip: [timestamp, ...] }
@@ -103,38 +104,53 @@ def logout():
 
 # ── Lecture / écriture config ─────────────────
 
+def _parse_file(path):
+    """Parse un fichier Python settings via AST et retourne ses variables."""
+    result = {}
+    if not path.exists():
+        return result
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except SyntaxError:
+        return result
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target = node.targets[0]
+            if isinstance(target, ast.Name):
+                try:
+                    result[target.id] = ast.literal_eval(node.value)
+                except Exception:
+                    pass
+    return result
+
+
+def load_subnets():
+    """Lit SUBNET_SETTINGS depuis bagbot_subnets.py uniquement."""
+    data = _parse_file(SUBNETS_FILE)
+    if 'SUBNET_SETTINGS' in data:
+        return data['SUBNET_SETTINGS']
+    # Fallback si bagbot_subnets.py n'existe pas encore
+    base = _parse_file(SETTINGS_FILE)
+    base.update(_parse_file(OVERRIDES_FILE))
+    return base.get('SUBNET_SETTINGS', {})
+
+
 def load_settings():
-    """Charge bagbot_settings.py + overrides et retourne les SUBNET_SETTINGS fusionnés."""
-    exe_dir = Path(".")
-    settings = {}
-
-    for path in [SETTINGS_FILE, OVERRIDES_FILE]:
-        if not path.exists():
-            continue
-        source = path.read_text(encoding="utf-8")
-        try:
-            tree = ast.parse(source)
-        except SyntaxError:
-            continue
-        for node in tree.body:
-            if isinstance(node, ast.Assign) and len(node.targets) == 1:
-                target = node.targets[0]
-                if isinstance(target, ast.Name):
-                    try:
-                        settings[target.id] = ast.literal_eval(node.value)
-                    except Exception:
-                        pass
-
-    return settings
+    """Config fusionnée pour l'affichage (lecture seule)."""
+    s = _parse_file(SETTINGS_FILE)
+    s.update(_parse_file(OVERRIDES_FILE))
+    s.update(_parse_file(SUBNETS_FILE))
+    return s
 
 
-def write_overrides(subnet_settings: dict):
-    """Écrit le fichier bagbot_settings_overrides.py avec les SUBNET_SETTINGS donnés."""
-    lines = ["# ─────────────────────────────────────────────\n"]
-    lines.append("#  bagbot_settings_overrides.py  —  Géré par l'interface web BagBot\n")
+def write_subnets(subnet_settings):
+    """Écrit UNIQUEMENT bagbot_subnets.py. Ne touche jamais aux autres fichiers."""
+    lines = []
+    lines.append("# ─────────────────────────────────────────────\n")
+    lines.append("#  bagbot_subnets.py — Géré par l'interface web BagBot\n")
+    lines.append("#  Ne pas éditer manuellement\n")
     lines.append("# ─────────────────────────────────────────────\n\n")
     lines.append("SUBNET_SETTINGS = {\n")
-
     for netuid in sorted(subnet_settings.keys()):
         s = subnet_settings[netuid]
         lines.append(f"    {netuid}: {{\n")
@@ -144,12 +160,11 @@ def write_overrides(subnet_settings: dict):
         lines.append(f"        'sell_upper': {s['sell_upper']},\n")
         lines.append(f"        'max_alpha' : {s['max_alpha']},\n")
         lines.append(f"    }},\n")
-
     lines.append("}\n")
-    OVERRIDES_FILE.write_text("".join(lines), encoding="utf-8")
+    SUBNETS_FILE.write_text("".join(lines), encoding="utf-8")
 
 
-def validate_subnet(data: dict) -> str | None:
+def validate_subnet(data):
     """Retourne un message d'erreur ou None si valide."""
     try:
         buy_lower  = float(data['buy_lower'])
@@ -159,7 +174,6 @@ def validate_subnet(data: dict) -> str | None:
         max_alpha  = float(data['max_alpha'])
     except (KeyError, ValueError):
         return "Tous les champs sont requis et doivent être des nombres"
-
     if buy_upper > sell_lower:
         return f"buy_upper ({buy_upper}) doit être inférieur à sell_lower ({sell_lower})"
     if sell_upper < sell_lower:
@@ -176,16 +190,14 @@ def validate_subnet(data: dict) -> str | None:
 @app.route('/')
 @login_required
 def index():
-    settings     = load_settings()
-    subnet_grids = settings.get('SUBNET_SETTINGS', {})
+    subnet_grids = load_subnets()
     return render_template('index.html', subnets=subnet_grids)
 
 
 @app.route('/api/subnets', methods=['GET'])
 @login_required
 def api_get_subnets():
-    settings = load_settings()
-    return jsonify(settings.get('SUBNET_SETTINGS', {}))
+    return jsonify(load_subnets())
 
 
 @app.route('/api/subnet/save', methods=['POST'])
@@ -205,8 +217,7 @@ def api_save_subnet():
     if err:
         return jsonify({'success': False, 'error': err}), 400
 
-    settings     = load_settings()
-    subnet_grids = settings.get('SUBNET_SETTINGS', {})
+    subnet_grids = load_subnets()
 
     subnet_grids[netuid] = {
         'buy_lower' : float(data['buy_lower']),
@@ -216,7 +227,7 @@ def api_save_subnet():
         'max_alpha' : float(data['max_alpha']),
     }
 
-    write_overrides(subnet_grids)
+    write_subnets(subnet_grids)
     return jsonify({'success': True, 'message': f'SN{netuid} sauvegardé'})
 
 
@@ -230,14 +241,13 @@ def api_delete_subnet():
     except (TypeError, ValueError):
         return jsonify({'success': False, 'error': 'netuid invalide'}), 400
 
-    settings     = load_settings()
-    subnet_grids = settings.get('SUBNET_SETTINGS', {})
+    subnet_grids = load_subnets()
 
     if netuid not in subnet_grids:
         return jsonify({'success': False, 'error': f'SN{netuid} introuvable'}), 404
 
     del subnet_grids[netuid]
-    write_overrides(subnet_grids)
+    write_subnets(subnet_grids)
     return jsonify({'success': True, 'message': f'SN{netuid} supprimé'})
 
 
