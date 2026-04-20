@@ -8,470 +8,230 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
         :root {
-            --bg: #080c10;
-            --surface: #0e1419;
-            --surface2: #111820;
-            --border: #1e2830;
-            --accent: #00d4ff;
-            --accent2: #00ff9d;
-            --text: #c8d8e8;
-            --muted: #4a6070;
-            --danger: #ff4560;
-            --warn: #ffb020;
-            --mono: 'Space Mono', monospace;
-            --sans: 'Syne', sans-serif;
+            --bg: #080c10; --surface: #0e1419; --surface2: #111820;
+            --border: #1e2830; --accent: #00d4ff; --accent2: #00ff9d;
+            --text: #c8d8e8; --muted: #4a6070; --danger: #ff4560;
+            --warn: #ffb020; --mono: 'Space Mono', monospace; --sans: 'Syne', sans-serif;
         }
-
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--sans);
-            min-height: 100vh;
-        }
-
+        body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
         body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
-            background-size: 40px 40px;
-            pointer-events: none;
-            z-index: 0;
+            content: ''; position: fixed; inset: 0;
+            background-image: linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
+            background-size: 40px 40px; pointer-events: none; z-index: 0;
         }
-
-        /* ── Header ── */
         header {
-            position: relative;
-            z-index: 10;
-            border-bottom: 1px solid var(--border);
-            padding: 0 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 60px;
-            background: var(--surface);
+            position: relative; z-index: 10; border-bottom: 1px solid var(--border);
+            padding: 0 32px; display: flex; align-items: center; justify-content: space-between;
+            height: 60px; background: var(--surface);
         }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 20px;
-            font-weight: 800;
-        }
-
+        .brand { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 800; }
         .brand-icon { color: var(--accent); font-size: 22px; }
         .brand span { color: var(--accent); }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .status-dot {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: var(--mono);
-            font-size: 11px;
-            color: var(--muted);
-        }
-
-        .dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: var(--accent2);
-            box-shadow: 0 0 8px var(--accent2);
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        .btn-logout {
-            font-family: var(--mono);
-            font-size: 11px;
-            letter-spacing: 1px;
-            color: var(--muted);
-            text-decoration: none;
-            border: 1px solid var(--border);
-            padding: 6px 14px;
-            transition: all 0.2s;
-        }
-
+        .header-right { display: flex; align-items: center; gap: 20px; }
+        .status-dot { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); box-shadow: 0 0 8px var(--accent2); animation: pulse 2s ease-in-out infinite; }
+        .dot.dead { background: var(--danger); box-shadow: 0 0 8px var(--danger); animation: none; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .btn-logout { font-family: var(--mono); font-size: 11px; letter-spacing: 1px; color: var(--muted); text-decoration: none; border: 1px solid var(--border); padding: 6px 14px; transition: all 0.2s; }
         .btn-logout:hover { color: var(--danger); border-color: var(--danger); }
+        .refresh-info { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+        .container { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
 
-        /* ── Layout ── */
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 32px 24px;
+        /* ── Statut bot ── */
+        .bot-status-card {
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 16px 24px; margin-bottom: 28px;
+            display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
         }
+        .bot-status-card.running { border-left: 3px solid var(--accent2); }
+        .bot-status-card.stopped { border-left: 3px solid var(--danger); }
+        .status-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+        .status-value { font-size: 14px; font-weight: 600; }
+        .status-value.ok { color: var(--accent2); }
+        .status-value.ko { color: var(--danger); }
+        .status-item { min-width: 140px; }
+        .status-log { flex: 1; font-family: var(--mono); font-size: 11px; color: var(--muted); background: var(--bg); border: 1px solid var(--border); padding: 8px 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* ── Section title ── */
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
+        /* ── Section ── */
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .section-title { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+        .section-title::before { content: ''; display: block; width: 3px; height: 14px; background: var(--accent); }
 
-        .section-title {
-            font-family: var(--mono);
-            font-size: 11px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--muted);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-title::before {
-            content: '';
-            display: block;
-            width: 3px;
-            height: 14px;
-            background: var(--accent);
-        }
-
-        /* ── Subnet cards ── */
-        .subnet-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .subnet-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 20px 24px;
-            transition: border-color 0.2s;
-            position: relative;
-        }
-
-        .subnet-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0;
-            width: 3px; height: 100%;
-            background: var(--accent);
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
+        /* ── Cards ── */
+        .subnet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .subnet-card { background: var(--surface); border: 1px solid var(--border); padding: 20px 24px; transition: border-color 0.2s; position: relative; }
+        .subnet-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--accent); opacity: 0; transition: opacity 0.2s; }
         .subnet-card:hover { border-color: rgba(0,212,255,0.3); }
         .subnet-card:hover::before { opacity: 1; }
+        .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .subnet-id { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .subnet-badge { font-family: var(--mono); font-size: 10px; background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2); color: var(--accent); padding: 2px 8px; letter-spacing: 1px; }
+        .price-badge { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--warn); background: rgba(255,176,32,0.1); border: 1px solid rgba(255,176,32,0.25); padding: 3px 10px; }
+        .btn-delete { background: transparent; border: 1px solid rgba(255,69,96,0.3); color: var(--danger); font-family: var(--mono); font-size: 11px; padding: 5px 12px; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; }
+        .btn-delete:hover { background: rgba(255,69,96,0.1); border-color: var(--danger); }
 
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
+        /* ── Barre prix ── */
+        .price-bar-wrap { margin-bottom: 14px; background: var(--bg); border: 1px solid var(--border); padding: 10px 14px; }
+        .price-bar-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--muted); margin-bottom: 6px; letter-spacing: 1px; }
+        .price-bar-track { position: relative; height: 8px; background: var(--border); overflow: visible; }
+        .price-bar-buy { position: absolute; height: 100%; background: rgba(0,255,157,0.25); border-left: 2px solid var(--accent2); border-right: 2px solid var(--accent2); }
+        .price-bar-sell { position: absolute; height: 100%; background: rgba(255,69,96,0.2); border-left: 2px solid var(--danger); border-right: 2px solid var(--danger); }
+        .price-bar-cursor { position: absolute; top: -4px; width: 3px; height: 16px; background: var(--warn); box-shadow: 0 0 6px var(--warn); transform: translateX(-50%); z-index: 2; }
+        .price-bar-cursor-label { position: absolute; top: -22px; font-family: var(--mono); font-size: 9px; color: var(--warn); white-space: nowrap; transform: translateX(-50%); }
+        .price-bar-status { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; margin-top: 6px; }
+        .zone-buy { color: var(--accent2); } .zone-sell { color: var(--danger); } .zone-mid { color: var(--muted); }
 
-        .subnet-id {
-            font-size: 18px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .subnet-badge {
-            font-family: var(--mono);
-            font-size: 10px;
-            background: rgba(0,212,255,0.1);
-            border: 1px solid rgba(0,212,255,0.2);
-            color: var(--accent);
-            padding: 2px 8px;
-            letter-spacing: 1px;
-        }
-
-        .btn-delete {
-            background: transparent;
-            border: 1px solid rgba(255,69,96,0.3);
-            color: var(--danger);
-            font-family: var(--mono);
-            font-size: 11px;
-            padding: 5px 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            letter-spacing: 1px;
-        }
-
-        .btn-delete:hover {
-            background: rgba(255,69,96,0.1);
-            border-color: var(--danger);
-        }
-
-        /* ── Inline fields ── */
-        .fields-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .field-group {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            padding: 10px 12px;
-        }
-
+        /* ── Fields ── */
+        .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .field-group { background: var(--bg); border: 1px solid var(--border); padding: 10px 12px; }
         .field-group.buy { border-left: 2px solid var(--accent2); }
         .field-group.sell { border-left: 2px solid var(--danger); }
         .field-group.neutral { border-left: 2px solid var(--muted); }
-
-        .field-label {
-            font-family: var(--mono);
-            font-size: 9px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 6px;
-        }
-
-        .field-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .field-sub-label {
-            font-family: var(--mono);
-            font-size: 9px;
-            color: var(--muted);
-            min-width: 28px;
-        }
-
-        .field-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            border-bottom: 1px solid var(--border);
-            color: var(--text);
-            font-family: var(--mono);
-            font-size: 13px;
-            padding: 2px 4px;
-            outline: none;
-            transition: border-color 0.2s;
-            width: 100%;
-        }
-
+        .field-label { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+        .field-row { display: flex; gap: 8px; align-items: center; }
+        .field-sub-label { font-family: var(--mono); font-size: 9px; color: var(--muted); min-width: 28px; }
+        .field-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 13px; padding: 2px 4px; outline: none; transition: border-color 0.2s; width: 100%; }
         .field-input:focus { border-bottom-color: var(--accent); }
-
-        .card-actions {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .btn-save {
-            background: transparent;
-            border: 1px solid var(--accent);
-            color: var(--accent);
-            font-family: var(--mono);
-            font-size: 11px;
-            padding: 8px 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-            letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-save::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: var(--accent);
-            transform: translateX(-100%);
-            transition: transform 0.2s;
-        }
-
+        .card-actions { display: flex; justify-content: flex-end; }
+        .btn-save { background: transparent; border: 1px solid var(--accent); color: var(--accent); font-family: var(--mono); font-size: 11px; padding: 8px 20px; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; position: relative; overflow: hidden; }
+        .btn-save::before { content: ''; position: absolute; inset: 0; background: var(--accent); transform: translateX(-100%); transition: transform 0.2s; }
         .btn-save:hover::before { transform: translateX(0); }
         .btn-save:hover { color: var(--bg); }
         .btn-save span { position: relative; z-index: 1; }
 
-        /* ── Add subnet form ── */
-        .add-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-style: dashed;
-            padding: 28px 24px;
-        }
-
-        .add-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin: 20px 0;
-        }
-
-        .add-field label {
-            display: block;
-            font-family: var(--mono);
-            font-size: 9px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 6px;
-        }
-
-        .add-field input {
-            width: 100%;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            font-family: var(--mono);
-            font-size: 13px;
-            padding: 10px 12px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
+        /* ── Add form ── */
+        .add-card { background: var(--surface); border: 1px dashed var(--border); padding: 28px 24px; }
+        .add-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0; }
+        .add-field label { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+        .add-field input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 13px; padding: 10px 12px; outline: none; transition: border-color 0.2s; }
         .add-field input:focus { border-color: var(--accent); }
-
-        .add-actions {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .btn-add {
-            background: rgba(0,255,157,0.08);
-            border: 1px solid var(--accent2);
-            color: var(--accent2);
-            font-family: var(--mono);
-            font-size: 11px;
-            padding: 10px 24px;
-            cursor: pointer;
-            transition: all 0.2s;
-            letter-spacing: 1px;
-        }
-
+        .add-actions { display: flex; justify-content: flex-end; }
+        .btn-add { background: rgba(0,255,157,0.08); border: 1px solid var(--accent2); color: var(--accent2); font-family: var(--mono); font-size: 11px; padding: 10px 24px; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; }
         .btn-add:hover { background: rgba(0,255,157,0.15); }
 
         /* ── Toast ── */
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 1000;
-            font-family: var(--mono);
-            font-size: 12px;
-            padding: 12px 20px;
-            border: 1px solid;
-            max-width: 360px;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.3s;
-            pointer-events: none;
-        }
-
+        .toast { position: fixed; bottom: 24px; right: 24px; z-index: 1000; font-family: var(--mono); font-size: 12px; padding: 12px 20px; border: 1px solid; max-width: 360px; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; }
         .toast.show { opacity: 1; transform: translateY(0); }
         .toast.success { background: rgba(0,255,157,0.1); border-color: var(--accent2); color: var(--accent2); }
         .toast.error { background: rgba(255,69,96,0.1); border-color: var(--danger); color: var(--danger); }
-
-        /* ── Empty state ── */
-        .empty {
-            text-align: center;
-            padding: 60px;
-            color: var(--muted);
-            font-family: var(--mono);
-            font-size: 13px;
-        }
+        .empty { text-align: center; padding: 60px; color: var(--muted); font-family: var(--mono); font-size: 13px; }
     </style>
 </head>
 <body>
-
 <header>
-    <div class="brand">
-        <span class="brand-icon">⬡</span>
-        Bag<span>Bot</span>
-    </div>
+    <div class="brand"><span class="brand-icon">⬡</span>Bag<span>Bot</span></div>
     <div class="header-right">
-        <div class="status-dot">
-            <div class="dot"></div>
-            Bot actif
+        <div class="status-dot" id="headerStatus">
+            <div class="dot {% if not bot_status.running %}dead{% endif %}" id="headerDot"></div>
+            <span id="headerStatusText">{% if bot_status.running %}Bot actif{% else %}Bot arrêté{% endif %}</span>
         </div>
+        <span class="refresh-info" id="refreshInfo">Actualisation auto</span>
         <a href="/logout" class="btn-logout">Déconnexion</a>
     </div>
 </header>
 
 <div class="container">
 
-    <!-- Subnets actifs -->
+    <!-- Statut bot -->
+    <div class="bot-status-card {% if bot_status.running %}running{% else %}stopped{% endif %}" id="botStatusCard">
+        <div class="status-item">
+            <div class="status-label">Statut</div>
+            <div class="status-value {% if bot_status.running %}ok{% else %}ko{% endif %}" id="statusValue">
+                {% if bot_status.running %}● En cours{% else %}■ Arrêté{% endif %}
+            </div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">Dernier tick</div>
+            <div class="status-value" id="lastTick" style="font-size:12px">{{ bot_status.last_tick or '—' }}</div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">Inactivité</div>
+            <div class="status-value" id="ageSecs" style="font-size:12px;color:var(--muted)">
+                {% if bot_status.age_secs is defined %}{{ bot_status.age_secs }}s{% else %}—{% endif %}
+            </div>
+        </div>
+        <div class="status-log" id="lastLogLine">{{ bot_status.last_line or '—' }}</div>
+    </div>
+
+    <!-- Subnets -->
     <div class="section-header">
         <div class="section-title">Subnets configurés</div>
-        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);">
-            {{ subnets|length }} subnet(s) actif(s)
-        </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);">{{ subnets|length }} subnet(s) actif(s)</div>
     </div>
 
     <div class="subnet-grid" id="subnetGrid">
         {% if subnets %}
             {% for netuid, cfg in subnets.items()|sort %}
-            <div class="subnet-card" id="card-{{ netuid }}">
+            {% set price = prices.get(netuid) %}
+            <div class="subnet-card" id="card-{{ netuid }}" data-netuid="{{ netuid }}"
+                 data-buy-lower="{{ cfg.buy_lower }}" data-buy-upper="{{ cfg.buy_upper }}"
+                 data-sell-lower="{{ cfg.sell_lower }}" data-sell-upper="{{ cfg.sell_upper }}">
+
                 <div class="card-header">
                     <div class="subnet-id">
-                        SN{{ netuid }}
-                        <span class="subnet-badge">ACTIF</span>
+                        SN{{ netuid }}<span class="subnet-badge">ACTIF</span>
                     </div>
-                    <button class="btn-delete" onclick="deleteSubnet({{ netuid }})">✕ Supprimer</button>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <span class="price-badge" id="price-{{ netuid }}" style="{% if not price %}opacity:0.4{% endif %}">
+                            {% if price %}{{ "%.6f"|format(price) }}{% else %}—{% endif %}
+                        </span>
+                        <button class="btn-delete" onclick="deleteSubnet({{ netuid }})">✕</button>
+                    </div>
                 </div>
 
+                <!-- Barre prix -->
+                {% set bl = cfg.buy_lower %}
+                {% set bu = cfg.buy_upper %}
+                {% set sl = cfg.sell_lower %}
+                {% set su = cfg.sell_upper %}
+                {% set rmin = bl * 0.9 %}
+                {% set rmax = su * 1.1 %}
+                {% set total = rmax - rmin %}
+                <div class="price-bar-wrap">
+                    <div class="price-bar-labels">
+                        <span>{{ "%.5f"|format(rmin) }}</span>
+                        <span style="color:var(--accent2)">BUY {{ "%.5f"|format(bl) }}–{{ "%.5f"|format(bu) }}</span>
+                        <span style="color:var(--danger)">SELL {{ "%.5f"|format(sl) }}–{{ "%.5f"|format(su) }}</span>
+                        <span>{{ "%.5f"|format(rmax) }}</span>
+                    </div>
+                    <div class="price-bar-track" id="bar-{{ netuid }}">
+                        <div class="price-bar-buy" style="left:{{ ((bl-rmin)/total*100)|round(1) }}%;width:{{ ((bu-bl)/total*100)|round(1) }}%;"></div>
+                        <div class="price-bar-sell" style="left:{{ ((sl-rmin)/total*100)|round(1) }}%;width:{{ ((su-sl)/total*100)|round(1) }}%;"></div>
+                        {% if price %}
+                        {% set pct = [[((price-rmin)/total*100)|round(1), 0]|max, 100]|min %}
+                        <div class="price-bar-cursor" id="cursor-{{ netuid }}" style="left:{{ pct }}%">
+                            <div class="price-bar-cursor-label">{{ "%.6f"|format(price) }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="price-bar-status">
+                        <span id="zone-{{ netuid }}" class="{% if price %}{% if price <= bu %}zone-buy{% elif price >= sl %}zone-sell{% else %}zone-mid{% endif %}{% else %}zone-mid{% endif %}">
+                            {% if price %}{% if price <= bu %}↓ Zone achat{% elif price >= sl %}↑ Zone vente{% else %}◆ Zone neutre{% endif %}{% else %}Prix non disponible{% endif %}
+                        </span>
+                        <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">SN{{ netuid }}</span>
+                    </div>
+                </div>
+
+                <!-- Champs -->
                 <div class="fields-grid">
                     <div class="field-group buy">
                         <div class="field-label">Achat</div>
-                        <div class="field-row">
-                            <span class="field-sub-label">LOW</span>
-                            <input class="field-input" type="number" step="any"
-                                id="buy_lower_{{ netuid }}" value="{{ cfg.buy_lower }}">
-                        </div>
-                        <div class="field-row" style="margin-top:6px">
-                            <span class="field-sub-label">HIGH</span>
-                            <input class="field-input" type="number" step="any"
-                                id="buy_upper_{{ netuid }}" value="{{ cfg.buy_upper }}">
-                        </div>
+                        <div class="field-row"><span class="field-sub-label">LOW</span><input class="field-input" type="number" step="any" id="buy_lower_{{ netuid }}" value="{{ cfg.buy_lower }}"></div>
+                        <div class="field-row" style="margin-top:6px"><span class="field-sub-label">HIGH</span><input class="field-input" type="number" step="any" id="buy_upper_{{ netuid }}" value="{{ cfg.buy_upper }}"></div>
                     </div>
-
                     <div class="field-group sell">
                         <div class="field-label">Vente</div>
-                        <div class="field-row">
-                            <span class="field-sub-label">LOW</span>
-                            <input class="field-input" type="number" step="any"
-                                id="sell_lower_{{ netuid }}" value="{{ cfg.sell_lower }}">
-                        </div>
-                        <div class="field-row" style="margin-top:6px">
-                            <span class="field-sub-label">HIGH</span>
-                            <input class="field-input" type="number" step="any"
-                                id="sell_upper_{{ netuid }}" value="{{ cfg.sell_upper }}">
-                        </div>
+                        <div class="field-row"><span class="field-sub-label">LOW</span><input class="field-input" type="number" step="any" id="sell_lower_{{ netuid }}" value="{{ cfg.sell_lower }}"></div>
+                        <div class="field-row" style="margin-top:6px"><span class="field-sub-label">HIGH</span><input class="field-input" type="number" step="any" id="sell_upper_{{ netuid }}" value="{{ cfg.sell_upper }}"></div>
                     </div>
-
-                    <div class="field-group neutral" style="grid-column: span 2;">
+                    <div class="field-group neutral" style="grid-column:span 2;">
                         <div class="field-label">Max Alpha</div>
-                        <div class="field-row">
-                            <input class="field-input" type="number" step="any"
-                                id="max_alpha_{{ netuid }}" value="{{ cfg.max_alpha }}">
-                        </div>
+                        <div class="field-row"><input class="field-input" type="number" step="any" id="max_alpha_{{ netuid }}" value="{{ cfg.max_alpha }}"></div>
                     </div>
                 </div>
-
                 <div class="card-actions">
-                    <button class="btn-save" onclick="saveSubnet({{ netuid }})">
-                        <span>✓ Sauvegarder</span>
-                    </button>
+                    <button class="btn-save" onclick="saveSubnet({{ netuid }})"><span>✓ Sauvegarder</span></button>
                 </div>
             </div>
             {% endfor %}
@@ -480,125 +240,114 @@
         {% endif %}
     </div>
 
-    <!-- Ajouter un subnet -->
-    <div class="section-header">
-        <div class="section-title">Ajouter un subnet</div>
-    </div>
-
+    <!-- Ajouter -->
+    <div class="section-header"><div class="section-title">Ajouter un subnet</div></div>
     <div class="add-card">
         <div class="add-grid">
-            <div class="add-field">
-                <label>Subnet ID (netuid)</label>
-                <input type="number" id="new_netuid" placeholder="ex: 70" min="1">
-            </div>
-            <div class="add-field">
-                <label>Buy Lower</label>
-                <input type="number" id="new_buy_lower" step="any" placeholder="ex: 0.0022">
-            </div>
-            <div class="add-field">
-                <label>Buy Upper</label>
-                <input type="number" id="new_buy_upper" step="any" placeholder="ex: 0.0035">
-            </div>
-            <div class="add-field">
-                <label>Sell Lower</label>
-                <input type="number" id="new_sell_lower" step="any" placeholder="ex: 0.0150">
-            </div>
-            <div class="add-field">
-                <label>Sell Upper</label>
-                <input type="number" id="new_sell_upper" step="any" placeholder="ex: 0.0200">
-            </div>
-            <div class="add-field">
-                <label>Max Alpha</label>
-                <input type="number" id="new_max_alpha" step="any" placeholder="ex: 60">
-            </div>
+            <div class="add-field"><label>Subnet ID</label><input type="number" id="new_netuid" placeholder="ex: 70" min="1"></div>
+            <div class="add-field"><label>Buy Lower</label><input type="number" id="new_buy_lower" step="any" placeholder="ex: 0.0022"></div>
+            <div class="add-field"><label>Buy Upper</label><input type="number" id="new_buy_upper" step="any" placeholder="ex: 0.0035"></div>
+            <div class="add-field"><label>Sell Lower</label><input type="number" id="new_sell_lower" step="any" placeholder="ex: 0.0150"></div>
+            <div class="add-field"><label>Sell Upper</label><input type="number" id="new_sell_upper" step="any" placeholder="ex: 0.0200"></div>
+            <div class="add-field"><label>Max Alpha</label><input type="number" id="new_max_alpha" step="any" placeholder="ex: 60"></div>
         </div>
-        <div class="add-actions">
-            <button class="btn-add" onclick="addSubnet()">+ Ajouter le subnet</button>
-        </div>
+        <div class="add-actions"><button class="btn-add" onclick="addSubnet()">+ Ajouter le subnet</button></div>
     </div>
-
 </div>
 
-<!-- Toast notification -->
 <div class="toast" id="toast"></div>
 
 <script>
 function showToast(msg, type='success') {
     const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = `toast ${type} show`;
+    t.textContent = msg; t.className = `toast ${type} show`;
     setTimeout(() => t.classList.remove('show'), 3500);
 }
 
 async function saveSubnet(netuid) {
-    const data = {
-        netuid     : netuid,
-        buy_lower  : document.getElementById(`buy_lower_${netuid}`).value,
-        buy_upper  : document.getElementById(`buy_upper_${netuid}`).value,
-        sell_lower : document.getElementById(`sell_lower_${netuid}`).value,
-        sell_upper : document.getElementById(`sell_upper_${netuid}`).value,
-        max_alpha  : document.getElementById(`max_alpha_${netuid}`).value,
+    const data = { netuid,
+        buy_lower: document.getElementById(`buy_lower_${netuid}`).value,
+        buy_upper: document.getElementById(`buy_upper_${netuid}`).value,
+        sell_lower: document.getElementById(`sell_lower_${netuid}`).value,
+        sell_upper: document.getElementById(`sell_upper_${netuid}`).value,
+        max_alpha: document.getElementById(`max_alpha_${netuid}`).value,
     };
-
-    const r = await fetch('/api/subnet/save', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
-    const res = await r.json();
-
-    if (res.success) {
-        showToast(`✓ SN${netuid} sauvegardé — le bot rechargera au prochain tick`, 'success');
-    } else {
-        showToast(`⚠ ${res.error}`, 'error');
-    }
+    const res = await (await fetch('/api/subnet/save', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})).json();
+    showToast(res.success ? `✓ SN${netuid} sauvegardé` : `⚠ ${res.error}`, res.success ? 'success' : 'error');
 }
 
 async function deleteSubnet(netuid) {
-    if (!confirm(`Supprimer SN${netuid} de la config ?`)) return;
-
-    const r = await fetch('/api/subnet/delete', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({netuid})
-    });
-    const res = await r.json();
-
-    if (res.success) {
-        document.getElementById(`card-${netuid}`)?.remove();
-        showToast(`✓ SN${netuid} supprimé — le bot rechargera au prochain tick`, 'success');
-    } else {
-        showToast(`⚠ ${res.error}`, 'error');
-    }
+    if (!confirm(`Supprimer SN${netuid} ?`)) return;
+    const res = await (await fetch('/api/subnet/delete', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({netuid})})).json();
+    if (res.success) { document.getElementById(`card-${netuid}`)?.remove(); showToast(`✓ SN${netuid} supprimé`); }
+    else showToast(`⚠ ${res.error}`, 'error');
 }
 
 async function addSubnet() {
-    const data = {
-        netuid     : document.getElementById('new_netuid').value,
-        buy_lower  : document.getElementById('new_buy_lower').value,
-        buy_upper  : document.getElementById('new_buy_upper').value,
-        sell_lower : document.getElementById('new_sell_lower').value,
-        sell_upper : document.getElementById('new_sell_upper').value,
-        max_alpha  : document.getElementById('new_max_alpha').value,
+    const data = { netuid: document.getElementById('new_netuid').value,
+        buy_lower: document.getElementById('new_buy_lower').value,
+        buy_upper: document.getElementById('new_buy_upper').value,
+        sell_lower: document.getElementById('new_sell_lower').value,
+        sell_upper: document.getElementById('new_sell_upper').value,
+        max_alpha: document.getElementById('new_max_alpha').value,
     };
-
     if (!data.netuid) { showToast('⚠ Subnet ID requis', 'error'); return; }
+    const res = await (await fetch('/api/subnet/save', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})).json();
+    if (res.success) { showToast(`✓ SN${data.netuid} ajouté`,'success'); setTimeout(() => location.reload(), 1500); }
+    else showToast(`⚠ ${res.error}`, 'error');
+}
 
-    const r = await fetch('/api/subnet/save', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
-    const res = await r.json();
-
-    if (res.success) {
-        showToast(`✓ SN${data.netuid} ajouté — rechargement de la page...`, 'success');
-        setTimeout(() => location.reload(), 1500);
-    } else {
-        showToast(`⚠ ${res.error}`, 'error');
+function updatePriceBar(netuid, price, bl, bu, sl, su) {
+    const rmin = bl * 0.9, rmax = su * 1.1, total = rmax - rmin;
+    if (total <= 0) return;
+    const pct = Math.max(0, Math.min(100, ((price - rmin) / total) * 100));
+    let cursor = document.getElementById(`cursor-${netuid}`);
+    const track = document.getElementById(`bar-${netuid}`);
+    if (!track) return;
+    if (!cursor) {
+        cursor = document.createElement('div');
+        cursor.className = 'price-bar-cursor'; cursor.id = `cursor-${netuid}`;
+        const lbl = document.createElement('div'); lbl.className = 'price-bar-cursor-label';
+        cursor.appendChild(lbl); track.appendChild(cursor);
+    }
+    cursor.style.left = pct + '%';
+    cursor.querySelector('.price-bar-cursor-label').textContent = price.toFixed(6);
+    const badge = document.getElementById(`price-${netuid}`);
+    if (badge) { badge.textContent = price.toFixed(6); badge.style.opacity = '1'; }
+    const zone = document.getElementById(`zone-${netuid}`);
+    if (zone) {
+        if (price <= bu)      { zone.textContent = '↓ Zone achat';  zone.className = 'zone-buy'; }
+        else if (price >= sl) { zone.textContent = '↑ Zone vente';  zone.className = 'zone-sell'; }
+        else                  { zone.textContent = '◆ Zone neutre'; zone.className = 'zone-mid'; }
     }
 }
-</script>
 
+async function refreshStatus() {
+    try {
+        const data = await (await fetch('/api/status')).json();
+        const bot = data.bot, alive = bot.running;
+        document.getElementById('headerDot').className = 'dot' + (alive ? '' : ' dead');
+        document.getElementById('headerStatusText').textContent = alive ? 'Bot actif' : 'Bot arrêté';
+        const card = document.getElementById('botStatusCard');
+        if (card) card.className = 'bot-status-card ' + (alive ? 'running' : 'stopped');
+        const sv = document.getElementById('statusValue');
+        if (sv) { sv.textContent = alive ? '● En cours' : '■ Arrêté'; sv.className = 'status-value ' + (alive ? 'ok' : 'ko'); }
+        const lt = document.getElementById('lastTick'); if (lt && bot.last_tick) lt.textContent = bot.last_tick;
+        const ag = document.getElementById('ageSecs'); if (ag && bot.age_secs !== undefined) ag.textContent = bot.age_secs + 's';
+        const ll = document.getElementById('lastLogLine'); if (ll && bot.last_line) ll.textContent = bot.last_line;
+        const prices = data.prices || {};
+        document.querySelectorAll('.subnet-card').forEach(c => {
+            const n = parseInt(c.dataset.netuid), p = prices[n];
+            if (!p) return;
+            updatePriceBar(n, p, parseFloat(c.dataset.buyLower), parseFloat(c.dataset.buyUpper),
+                parseFloat(c.dataset.sellLower), parseFloat(c.dataset.sellUpper));
+        });
+        const now = new Date();
+        document.getElementById('refreshInfo').textContent = `Mis à jour ${now.toLocaleTimeString('fr-FR')}`;
+    } catch(e) { console.warn('Refresh failed:', e); }
+}
+refreshStatus();
+setInterval(refreshStatus, 30000);
+</script>
 </body>
 </html>
