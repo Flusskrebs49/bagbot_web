@@ -8,11 +8,12 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from pathlib import Path
 from functools import wraps
-from datetime import timedelta
+from datetime import timedelta, datetime
 from collections import defaultdict
 import ast
 import time
 import os
+import requests as http_requests
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -26,6 +27,18 @@ BRUTE_FORCE_WINDOW_S  = 300          # fenêtre de blocage en secondes (5 min)
 SETTINGS_FILE    = Path("bagbot_settings.py")
 OVERRIDES_FILE   = Path("bagbot_settings_overrides.py")
 SUBNETS_FILE     = Path("bagbot_subnets.py")   # géré exclusivement par cette interface
+LOG_FILE         = Path("staking.log")
+BOT_ALIVE_SECS   = 60   # si le log n'a pas bougé depuis X secondes → bot arrêté
+
+# ── Connexion InfluxDB (lue depuis influx_reporter.py au démarrage) ──
+def _load_influx_config():
+    cfg = _parse_file(Path("influx_reporter.py"))
+    return {
+        "url"  : cfg.get("INFLUX_URL",      "http://localhost:8086"),
+        "db"   : cfg.get("INFLUX_DB",        "bagbot"),
+        "user" : cfg.get("INFLUX_USER",      ""),
+        "password": cfg.get("INFLUX_PASSWORD", ""),
+    }
 
 # ── Protection brute force ────────────────────
 _failed_attempts = defaultdict(list)  # { ip: [timestamp, ...] }
@@ -124,6 +137,62 @@ def _parse_file(path):
     return result
 
 
+def get_bot_status():
+    """Lit staking.log pour déterminer si le bot tourne."""
+    try:
+        if not LOG_FILE.exists():
+            return {"running": False, "last_tick": None, "last_line": "Fichier log introuvable"}
+        stat = LOG_FILE.stat()
+        age  = time.time() - stat.st_mtime
+        # Lire la dernière ligne du log
+        with open(LOG_FILE, 'rb') as f:
+            f.seek(0, 2)
+            size = f.tell()
+            f.seek(max(0, size - 2048))
+            last_lines = f.read().decode('utf-8', errors='ignore').strip().splitlines()
+        last_line = last_lines[-1] if last_lines else ""
+        # Extraire le timestamp de la dernière ligne
+        last_tick = None
+        if last_line and " - " in last_line:
+            try:
+                ts_str   = last_line.split(" - ")[0].strip()
+                last_tick = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S,%f").strftime("%Y-%m-%d %H:%M:%S")
+            except Exception:
+                pass
+        return {
+            "running"   : age < BOT_ALIVE_SECS,
+            "last_tick" : last_tick,
+            "last_line" : last_line[:120],
+            "age_secs"  : int(age),
+        }
+    except Exception as e:
+        return {"running": False, "last_tick": None, "last_line": str(e)}
+
+
+def get_subnet_prices():
+    """Interroge InfluxDB pour récupérer le dernier prix de chaque subnet."""
+    try:
+        cfg   = _load_influx_config()
+        query = 'SELECT last("price") FROM "bagbot_subnet" WHERE time > now() - 5m GROUP BY "netuid"'
+        resp  = http_requests.get(
+            f"{cfg['url']}/query",
+            params={"db": cfg["db"], "q": query},
+            auth=(cfg["user"], cfg["password"]),
+            timeout=5
+        )
+        resp.raise_for_status()
+        data   = resp.json()
+        prices = {}
+        for series in data.get("results", [{}])[0].get("series", []):
+            netuid = int(series.get("tags", {}).get("netuid", -1))
+            vals   = series.get("values", [[]])[0]
+            if len(vals) >= 2 and vals[1] is not None and netuid >= 0:
+                prices[netuid] = float(vals[1])
+        return prices
+    except Exception:
+        return {}
+
+
 def load_subnets():
     """Lit SUBNET_SETTINGS depuis bagbot_subnets.py uniquement."""
     data = _parse_file(SUBNETS_FILE)
@@ -191,7 +260,19 @@ def validate_subnet(data):
 @login_required
 def index():
     subnet_grids = load_subnets()
-    return render_template('index.html', subnets=subnet_grids)
+    prices       = get_subnet_prices()
+    bot_status   = get_bot_status()
+    return render_template('index.html', subnets=subnet_grids, prices=prices, bot_status=bot_status)
+
+
+@app.route('/api/status', methods=['GET'])
+@login_required
+def api_status():
+    """Retourne le statut du bot et les prix en temps réel (pour le polling JS)."""
+    return jsonify({
+        "bot"    : get_bot_status(),
+        "prices" : get_subnet_prices(),
+    })
 
 
 @app.route('/api/subnets', methods=['GET'])
