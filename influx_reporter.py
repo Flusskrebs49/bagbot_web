@@ -10,7 +10,7 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 # ── Configuration ─────────────────────────────
-INFLUX_URL      = "http://192.xxx.xxx.xxx:8086"
+INFLUX_URL      = "http://xxx.xxx.xxx.xxx:8086"
 INFLUX_DB       = "xxxxxxxx"
 INFLUX_USER     = "xxxxxxxx"
 INFLUX_PASSWORD = "xxxxxxxx"
@@ -147,6 +147,13 @@ def send_metrics(bot_instance, stats: dict, trade_counts: dict, balance: float, 
             # P&L latent
             if stake_amt > 0 and buy_threshold is not None:
                 fields["pnl_latent"] = float((price - buy_threshold) * stake_amt)
+
+            # VWAP et P&L réalisé
+            vwap = bot_instance.get_vwap(netuid) if hasattr(bot_instance, 'get_vwap') else None
+            if vwap is not None:
+                fields["vwap"] = float(vwap)
+                if stake_amt > 0:
+                    fields["pnl_vwap"] = float((price - vwap) * stake_amt)
 
             lines.append(_build_line(
                 measurement  = "bagbot_subnet",
