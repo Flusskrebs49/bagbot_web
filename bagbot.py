@@ -137,6 +137,10 @@ class BittensorUtility():
         self.TRADE_COUNTS_FILE = 'trade_counts.json'
         self._load_trade_counts()
         self.watched_wallets_balance = {}  # { label: {'balance_tao', 'stake_value_tao', 'total_tao'} }
+        self.buy_cooldown    = {}   # { netuid: tick_du_dernier_achat }
+        self.vwap_data       = {}   # { netuid: {'total_cost': float, 'total_alpha': float} }
+        self.VWAP_FILE       = 'vwap_data.json'
+        self._load_vwap()
 
 
     def _load_trade_counts(self):
@@ -158,6 +162,60 @@ class BittensorUtility():
                 json.dump(self.trade_counts, f, indent=2)
         except Exception as e:
             logger.error(f"Erreur sauvegarde trade_counts: {e}")
+
+    def _load_vwap(self):
+        """Charge les données VWAP depuis le fichier JSON."""
+        try:
+            with open(self.VWAP_FILE, 'r') as f:
+                raw = json.load(f)
+                self.vwap_data = {int(k): v for k, v in raw.items()}
+            logger.info(f"VWAP chargé depuis {self.VWAP_FILE}")
+        except FileNotFoundError:
+            logger.info("Aucun fichier vwap_data.json trouvé, démarrage à zéro")
+        except Exception as e:
+            logger.error(f"Erreur chargement VWAP: {e}")
+
+    def _save_vwap(self):
+        """Sauvegarde les données VWAP dans le fichier JSON."""
+        try:
+            with open(self.VWAP_FILE, 'w') as f:
+                json.dump(self.vwap_data, f, indent=2)
+        except Exception as e:
+            logger.error(f"Erreur sauvegarde VWAP: {e}")
+
+    def _update_vwap_buy(self, netuid: int, tao_spent: float, alpha_received: float):
+        """Met à jour le VWAP après un achat."""
+        if alpha_received <= 0:
+            return
+        current = self.vwap_data.get(netuid, {'total_cost': 0.0, 'total_alpha': 0.0})
+        current['total_cost']  += tao_spent
+        current['total_alpha'] += alpha_received
+        self.vwap_data[netuid]  = current
+        vwap = current['total_cost'] / current['total_alpha']
+        logger.info(f"[VWAP] SN{netuid}: coût moyen mis à jour → {vwap:.6f} TAO/alpha")
+        self._save_vwap()
+
+    def _update_vwap_sell(self, netuid: int, alpha_sold: float):
+        """Réduit le stock VWAP proportionnellement après une vente."""
+        current = self.vwap_data.get(netuid)
+        if not current or current['total_alpha'] <= 0:
+            return
+        ratio = min(alpha_sold / current['total_alpha'], 1.0)
+        current['total_cost']  *= (1 - ratio)
+        current['total_alpha'] -= alpha_sold
+        if current['total_alpha'] < 0.0001:
+            current['total_cost']  = 0.0
+            current['total_alpha'] = 0.0
+        self.vwap_data[netuid] = current
+        logger.info(f"[VWAP] SN{netuid}: stock réduit après vente, alpha restant: {current['total_alpha']:.4f}")
+        self._save_vwap()
+
+    def get_vwap(self, netuid: int) -> float | None:
+        """Retourne le prix moyen pondéré (VWAP) pour un subnet, ou None si pas de position."""
+        data = self.vwap_data.get(netuid)
+        if not data or data['total_alpha'] <= 0:
+            return None
+        return data['total_cost'] / data['total_alpha']
 
     def get_subnet_setting(self, subnet_netuid, setting_name, default_value):
         """
@@ -783,6 +841,12 @@ class BittensorUtility():
  
  
     def constructBuy(self, subnet_netuid):
+        # Vérifier le cooldown (2 blocs entre deux achats sur le même subnet)
+        last_buy_tick = self.buy_cooldown.get(subnet_netuid, -999)
+        if self.tick - last_buy_tick < 2:
+            logger.info(f"SN{subnet_netuid}: cooldown achat actif (tick {self.tick}, dernier achat tick {last_buy_tick})")
+            return None
+
         current_stake_amt = self.my_current_stake(subnet_netuid)
         buy_threshold = self.get_subnet_buy_threshold(subnet_netuid)
  
@@ -886,6 +950,13 @@ class BittensorUtility():
                     netuid = buyTrade['netuid']
                     self.trade_counts.setdefault(netuid, {'buy': 0, 'sell': 0})['buy'] += 1
                     self._save_trade_counts()
+                    # Cooldown : mémoriser le tick de cet achat
+                    self.buy_cooldown[netuid] = self.tick
+                    # VWAP : enregistrer le coût réel
+                    tao_spent     = float(buyTrade['tao_amount'])
+                    prix_reel     = float(self.stats.get(netuid, {}).get('price', 0))
+                    alpha_recu    = tao_spent / prix_reel if prix_reel > 0 else 0.0
+                    self._update_vwap_buy(netuid, tao_spent, alpha_recu)
                 else:
                     logger.info(f"Failed to stake {float(buyTrade['tao_amount'])} TAO to subnet {buyTrade['netuid']} ({str(stake_result)})")
                     self._notify_buy_failed(buyTrade, f"stake_result={str(stake_result)}")
@@ -923,6 +994,9 @@ class BittensorUtility():
                     netuid = sellTrade['netuid']
                     self.trade_counts.setdefault(netuid, {'buy': 0, 'sell': 0})['sell'] += 1
                     self._save_trade_counts()
+                    # VWAP : réduire le stock proportionnellement
+                    alpha_vendu = float(sellTrade['alpha_amount'])
+                    self._update_vwap_sell(netuid, alpha_vendu)
                 else:
                     logger.info(f"Failed to unstake {str(sellTrade)}  sn{subnet_netuid} ({str(unstake_result)})")
                     self._notify_sell_failed(sellTrade, f"unstake_result={str(unstake_result)}")
